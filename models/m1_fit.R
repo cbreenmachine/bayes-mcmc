@@ -1,28 +1,29 @@
 library(rstan)
 
-ifile <- "../dataDerived/20221130-tenLoci-v1.RData"
+N_samples <- 5000
+N_cores <- 5
+
+ifile <- "../dataDerived/20221208-tenLoci-v2.RData"
 ofile <- "m1_fit.RData"
 
 # RUN THIS BLOCK AT ONCE
 load(ifile)
-y <- t(y); c <- t(C)
-N <- nrow(y); G <- ncol(y)
-X <- X[ ,1:3]
 P <- ncol(X)
+G <- 11
 
 # Set parameters and data
 args <- list(N = N, G= G, P =P,
              X = X, y = y, c = c)
 
 # SAMPLE
-N_samples <- 5000
+
 
 model <- rstan::stan_model("m1_binomial.stan")
 
 bayes.fit <-
   rstan::sampling(object = model,
                   data = args,
-                  chains = 6, iter = N_samples/2,
+                  chains = , iter = N_samples/2,
                   cores = 6)
 
 bayes.fit

@@ -1,46 +1,41 @@
 library(rstan)
 
-ifile <- "../dataDerived/20221130-tenLoci-v1.RData"
-ofile <- "m2_fit.RData"
+N_samples <- 5000
+N_cores <- 5
 
-tau_std <- 0.1
+ifile <- "../dataDerived/20221208-tenLoci-v2.RData"
+ofile <- "m2_fit.RData"
 
 # RUN THIS BLOCK AT ONCE
 load(ifile)
-y <- t(y); c <- t(C)
-N <- nrow(y); G <- ncol(y)
-X <- X[ ,1:3]
 P <- ncol(X)
 
+G <- 11
+
+W <- matrix(data = 0, nrow = G, ncol = G)
+
+for (i in 1:(G-1)){
+  W[i, i+1] <- 1
+  W[i+1, i] <- 1
+}
+
+W
+
 # Set parameters and data
-args <- list(N = N, G= G, P =P,
-             X = X, y = y, c = c,
-             tau_std = tau_std)
+args <- list(N = N, G = G, P = P,
+             W = W,
+             X = X, y = y, c = c)
 
 # SAMPLE
-N_samples <- 5000
 
 model <- rstan::stan_model("m2_binomial_covariates_re.stan")
 
 bayes.fit <-
   rstan::sampling(object = model,
                   data = args,
-                  chains = 6, iter = N_samples/2,
-                  cores = 6)
-
-bayes.fit
-
-pairs(bayes.fit, pars = c("beta[1,1]", "beta[1,2]",
-                          "beta[1,3]", "beta[1,4]",
-                          "beta[1,5]", "beta[1,6]"))
-
-
-
-load_effects <- as.data.frame(bayes.fit) %>%
-  dplyr::select(starts_with("beta[1,"))
-
-quantile(load_effects[ ,2], c(0.05, 0.95))
-
-hist(load_effects[,2])
+                  chains = N_cores,
+                  warmup = N_samples / 2,
+                  iter = N_samples,
+                  cores = N_cores)
 
 save(list = ls(), file = ofile)
