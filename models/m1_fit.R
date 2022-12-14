@@ -1,6 +1,6 @@
 library(rstan)
 
-N_samples <- 5000
+N_samples <- 10000
 N_cores <- 5
 
 ifile <- "../dataDerived/20221208-tenLoci-v2.RData"
@@ -16,25 +16,15 @@ args <- list(N = N, G= G, P =P,
              X = X, y = y, c = c)
 
 # SAMPLE
-
-
 model <- rstan::stan_model("m1_binomial.stan")
 
+start_time <- Sys.time()
 bayes.fit <-
   rstan::sampling(object = model,
                   data = args,
-                  chains = , iter = N_samples/2,
-                  cores = 6)
-
-bayes.fit
-
-pairs(bayes.fit, pars = c("beta[1,1]", "beta[1,2]"))
-
-load_effects <- as.data.frame(bayes.fit) %>%
-  dplyr::select(starts_with("beta[1,"))
-
-quantile(load_effects[ ,2], c(0.05, 0.95))
-
-hist(load_effects[,2])
+                  chains = N_cores,
+                  iter = N_samples,
+                  cores = N_cores)
+elapsed_time <- Sys.time() - start_time
 
 save(list = ls(), file = ofile)
